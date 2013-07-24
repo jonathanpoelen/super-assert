@@ -1,3 +1,12 @@
+#ifndef SASSERT_HPP
+#define SASSERT_HPP
+
+#ifdef NDEBUG
+
+#define sassert(msg, expr)
+
+#else
+
 #include <iostream>
 #include <type_traits>
 #include <falcon/type_traits/eval_if.hpp>
@@ -10,12 +19,6 @@
 #endif
 
 namespace Super_Assert {
-
-#ifdef NDEBUG
-
-#define sassert(msg, expr)
-
-#else
 
 #if defined(SASSERT_COLOR) && !defined(SASSERT_NO_COLOR)
 //TODO SASSERT_DYNAMIC_COLOR (read file configuration)
@@ -313,17 +316,4 @@ MOP(>=)
 
 #endif
 
-int main()
-{
-  int  a = 6;
-  int  b = 1;
-  int  c = 0;
-  int  d = 9;
-  sassert("ok",
-          a * b + c + 'a' < d );
-  sassert("non satisfaisant à cause de la priorité des opérateurs",
-          a * b && c < d );
-  struct A{ operator bool (){return true;}} aa;
-  sassert("no printable", aa);
-  sassert("s==s", ""=="");
-}
+#endif
