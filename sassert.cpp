@@ -6,15 +6,46 @@
 
 namespace Super_Assert {
 
-#define SASSERT_COLOR_CHARACTER "\033[00;33m"
-#define SASSERT_COLOR_FLOATING "\033[00;32m"
-#define SASSERT_COLOR_INTEGRAL "\033[00;34m"
-#define SASSERT_COLOR_BOOLEAN "\033[00;36m"
-#define SASSERT_COLOR_STRING "\033[00;31m"
-#define SASSERT_COLOR_OTHER "\033[00;35m"
-#define SASSERT_COLOR_UNKNOW "\033[00;36m"
-#define SASSERT_COLOR_OPERATOR "\033[00;30m"
-#define SASSERT_COLOR_RESET "\033[00m"
+#if defined(SASSERT_COLOR) && !defined(SASSERT_NO_COLOR)
+//TODO SASSERT_DYNAMIC_COLOR (read file configuration)
+#  ifndef SASSERT_COLOR_CHARACTER
+#  define SASSERT_COLOR_CHARACTER "\033[00;33m"
+#  endif
+#  ifndef SASSERT_COLOR_FLOATING
+#    define SASSERT_COLOR_FLOATING "\033[00;32m"
+#  endif
+#  ifndef SASSERT_COLOR_INTEGRAL
+#    define SASSERT_COLOR_INTEGRAL "\033[00;34m"
+#  endif
+#  ifndef SASSERT_COLOR_BOOLEAN
+#    define SASSERT_COLOR_BOOLEAN "\033[00;36m"
+#  endif
+#  ifndef SASSERT_COLOR_STRING
+#    define SASSERT_COLOR_STRING "\033[00;31m"
+#  endif
+#  ifndef SASSERT_COLOR_OTHER
+#    define SASSERT_COLOR_OTHER "\033[00;35m"
+#  endif
+#  ifndef SASSERT_COLOR_UNKNOW
+#    define SASSERT_COLOR_UNKNOW "\033[00;36m"
+#  endif
+#  ifndef SASSERT_COLOR_OPERATOR
+#    define SASSERT_COLOR_OPERATOR "\033[00;30m"
+#  endif
+#  ifndef SASSERT_COLOR_RESET
+#    define SASSERT_COLOR_RESET "\033[00m"
+#  endif
+#else
+#  define SASSERT_COLOR_CHARACTER
+#  define SASSERT_COLOR_FLOATING
+#  define SASSERT_COLOR_INTEGRAL
+#  define SASSERT_COLOR_BOOLEAN
+#  define SASSERT_COLOR_STRING
+#  define SASSERT_COLOR_OTHER
+#  define SASSERT_COLOR_UNKNOW
+#  define SASSERT_COLOR_OPERATOR
+#  define SASSERT_COLOR_RESET
+#endif
 
 enum class PrinterType
 {

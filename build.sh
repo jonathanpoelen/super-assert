@@ -1,2 +1,2 @@
 #!/bin/sh
-make CPPFLAGS+=-I. CXXFLAGS+=-std=c++11 sassert
+make CPPFLAGS+=-I. CPPFLAGS+=-DSASSERT_COLOR CXXFLAGS+=-std=c++11 sassert
