@@ -7,9 +7,7 @@ Improved display of the assert() macro from C++
 Build
 -----
 
-  $ ./build.sh
-or
-  $ CPPFLAGS+=-DSASSERT_NO_COLOR ./build.sh
+  `./build.sh` or `CPPFLAGS+=-DSASSERT_NO_COLOR ./build.sh`
 
 
 Defined macros
