@@ -1,18 +1,20 @@
+/**
+ * \author Jonathan Poelen, jonathan.poelen+sassert@gmail.com
+ */
+
 #ifndef SASSERT_HPP
 #define SASSERT_HPP
 
 #ifdef NDEBUG
 
-#define sassert(msg, expr)
+#define sassert_message(expr, msg)
+#define sassert(expr)
 
 #else
 
+#include <string>
 #include <iostream>
 #include <type_traits>
-#include <falcon/type_traits/eval_if.hpp>
-#include <falcon/type_traits/is_character.hpp>
-#include <falcon/type_traits/is_string.hpp>
-#include <cstdlib>
 
 #ifndef NO_BOOST
 # include <boost/current_function.hpp>
@@ -81,6 +83,28 @@ namespace Super_Assert {
 #  define SASSERT_COLOR_RESET ""
 #endif
 
+
+template<typename T> struct is_character : std::false_type {};
+template<> struct is_character<signed char> : std::true_type {};
+template<> struct is_character<unsigned char> : std::true_type {};
+template<> struct is_character<char> : std::true_type {};
+template<> struct is_character<wchar_t> : std::true_type {};
+template<> struct is_character<char16_t> : std::true_type {};
+template<> struct is_character<char32_t> : std::true_type {};
+
+template<class BasicString> struct is_basic_string : std::false_type {};
+template<class CharT, class Trait, class Allocator>
+struct is_basic_string<std::basic_string<CharT, Trait, Allocator> >
+: std::true_type {};
+
+template<class T> struct is_string : is_basic_string<T> {};
+template<class T> struct is_string<T*> : is_character<T> {};
+template<class T, std::size_t N> struct is_string<T[N]> : is_character<T> {};
+
+template<class T, class TrueClass, class FalseClass>
+using eval_if_c_t = typename std::conditional<T::value, TrueClass, FalseClass>::type::type;
+
+
 enum class PrinterType
 {
   integral,
@@ -98,17 +122,16 @@ struct printer_type
   typedef printer_type type;
 };
 
-struct unless_for_to_string {};
-void to_string(unless_for_to_string);
+using std::to_string;
 
 template<typename T, PrinterType =
-falcon::eval_if_c<falcon::is_character<T>, printer_type<PrinterType::character>,
-falcon::eval_if_c<std::is_same<T, bool>, printer_type<PrinterType::boolean>,
-falcon::eval_if_c<std::is_integral<T>, printer_type<PrinterType::integral>,
-falcon::eval_if_c<std::is_floating_point<T>, printer_type<PrinterType::floating_point>,
-falcon::eval_if_c<falcon::is_string<T>, printer_type<PrinterType::string>,
+eval_if_c_t<is_character<T>, printer_type<PrinterType::character>,
+eval_if_c_t<std::is_same<T, bool>, printer_type<PrinterType::boolean>,
+eval_if_c_t<std::is_integral<T>, printer_type<PrinterType::integral>,
+eval_if_c_t<std::is_floating_point<T>, printer_type<PrinterType::floating_point>,
+eval_if_c_t<is_string<T>, printer_type<PrinterType::string>,
 printer_type<PrinterType::other>
->>>>>::type::value>
+>>>>>::value>
 struct Printer
 {
   static void print(const T& x)
@@ -299,19 +322,36 @@ MOP(>=)
 #  endif
 # endif
 
-#define sassert(msg, expr) do {\
-  if ((expr) ? 0 : 1) {\
-    std::ios_base::sync_with_stdio(1);\
-    std::cerr << SASSERT_COLOR_MSG << (msg) << SASSERT_COLOR_RESET ": ";\
-    (Super_Assert::B * expr).print();\
-    std::cerr << \
-    "\n" SASSERT_COLOR_FILE __FILE__ SASSERT_COLOR_RESET \
-    ":" SASSERT_COLOR_LINE PP_CAT(__LINE__) SASSERT_COLOR_RESET \
-    ": " SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET \
-    ": '" SASSERT_COLOR_EXPR PP_CAT(expr) SASSERT_COLOR_RESET "' failed" \
-    << std::endl;\
-    abort();\
-  }\
+/*[[noreturn]]*/
+inline void assert_abort()
+{
+  struct null_pointer { void ** p = nullptr; };
+  *null_pointer().p = 0;
+}
+
+#define sassert_fail_(expr)                                                         \
+    std::cerr << SASSERT_COLOR_FILE __FILE__ SASSERT_COLOR_RESET                    \
+    ":" SASSERT_COLOR_LINE PP_CAT(__LINE__) SASSERT_COLOR_RESET                     \
+    ":\n" SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET         \
+    ":\nAssertion `" SASSERT_COLOR_EXPR PP_CAT(expr) SASSERT_COLOR_RESET "` failed" \
+     "\n           ";                                                               \
+    (Super_Assert::B * expr).print();                                               \
+    std::cerr << std::endl;                                                         \
+    assert_abort();
+
+#define sassert_message(expr, msg) do {                                   \
+  if ((expr) ? 0 : 1) {                                                   \
+    std::ios_base::sync_with_stdio(1);                                    \
+    std::cerr << SASSERT_COLOR_MSG << (msg) << SASSERT_COLOR_RESET ":\n"; \
+    sassert_fail_(expr)                                                   \
+  }                                                                       \
+} while(0)
+
+#define sassert(expr) do {             \
+  if ((expr) ? 0 : 1) {                \
+    std::ios_base::sync_with_stdio(1); \
+    sassert_fail_(expr)                \
+  }                                    \
 } while(0)
 
 #endif

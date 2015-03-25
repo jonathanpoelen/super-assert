@@ -1,0 +1,18 @@
+/**
+ * \brief Replace assert implementation by sassert
+ * \author Jonathan Poelen, jonathan.poelen+sassert@gmail.com
+ */
+
+#ifndef SASSERT_CASSERT_HPP
+#define SASSERT_CASSERT_HPP
+
+#include <cassert>
+
+#undef assert
+
+#define SASSERT_COLOR
+#include "sassert/sassert.hpp"
+
+#define assert sassert
+
+#endif

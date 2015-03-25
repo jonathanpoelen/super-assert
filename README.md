@@ -1,7 +1,7 @@
 super-sassert
 =============
 
-Improved display of the assert() macro from C++
+Improved display of the assert() macro from C++.
 
 
 Build
@@ -29,7 +29,7 @@ Defined macros
 * `SASSERT_COLOR_RESET`       "\033[00m"
 
 
-If `NDEBUG` is defined as a macro name at the point in the source code where <cassert> is included, then assert does nothing.
+If `NDEBUG` is defined then sassert does nothing.
 
 If `NO_BOOST` is defined then boost isn't use (boost/current_function.hpp).
 
