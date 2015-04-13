@@ -18,6 +18,7 @@
 
 #ifndef NO_BOOST
 # include <boost/current_function.hpp>
+# include <boost/preprocessor/stringize.hpp>
 #endif
 
 namespace Super_Assert {
@@ -275,7 +276,7 @@ operator*(const SAssert<>&, const T& x)
 
 constexpr SAssert<> start() { return {}; }
 
-#define MOP(op)\
+#define SASSERT_OP(op)\
 template<typename T, typename U>\
 SAssert<const T&, const U&>\
 operator op(const SAssert<T>& a, const U& x)\
@@ -286,29 +287,32 @@ SAssert<const SAssert<T,U>&, const R&>\
 operator op(const SAssert<T,U>& a, const R& x)\
 { return {a, #op, x}; }
 
-MOP(&)
-MOP(^)
-MOP(|)
-MOP(||)
-MOP(&&)
-MOP(*)
-MOP(+)
-MOP(-)
-MOP(/)
-MOP(%)
-MOP(==)
-MOP(!=)
-MOP(<)
-MOP(<=)
-MOP(>)
-MOP(>=)
+SASSERT_OP(&)
+SASSERT_OP(^)
+SASSERT_OP(|)
+SASSERT_OP(||)
+SASSERT_OP(&&)
+SASSERT_OP(*)
+SASSERT_OP(+)
+SASSERT_OP(-)
+SASSERT_OP(/)
+SASSERT_OP(%)
+SASSERT_OP(==)
+SASSERT_OP(!=)
+SASSERT_OP(<)
+SASSERT_OP(<=)
+SASSERT_OP(>)
+SASSERT_OP(>=)
 
-#undef MOP
+#undef SASSERT_OP
 }
 
-//BOOST_PP_CAT
-#define PP_CAT_I(e) #e
-#define PP_CAT(e) PP_CAT_I(e)
+#ifndef NO_BOOST
+# define SASSERT_PP_STRINGIZE BOOST_PP_STRINGIZE
+#else
+# define SASSERT_PP_STRINGIZE_I(e) #e
+# define SASSERT_PP_STRINGIZE(e) SASSERT_PP_STRINGIZE_I(e)
+#endif
 
 #ifndef NO_BOOST
 #  define SASSERT_FUNCTION BOOST_CURRENT_FUNCTION
@@ -329,28 +333,29 @@ inline void assert_abort()
   *null_pointer().p = 0;
 }
 
-#define sassert_fail_(expr)                                                         \
-    std::cerr << SASSERT_COLOR_FILE __FILE__ SASSERT_COLOR_RESET                    \
-    ":" SASSERT_COLOR_LINE PP_CAT(__LINE__) SASSERT_COLOR_RESET                     \
-    ":\n" SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET         \
-    ":\nAssertion `" SASSERT_COLOR_EXPR PP_CAT(expr) SASSERT_COLOR_RESET "` failed" \
-     "\n           ";                                                               \
-    (Super_Assert::start() * expr).print();                                         \
-    std::cerr << std::endl;                                                         \
+#define SASSERT_FAIL_(expr)                                                 \
+    std::cerr << SASSERT_COLOR_FILE __FILE__ SASSERT_COLOR_RESET            \
+    ":" SASSERT_COLOR_LINE SASSERT_PP_STRINGIZE(__LINE__) SASSERT_COLOR_RESET     \
+    ":\n" SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET \
+    ":\nAssertion `" SASSERT_COLOR_EXPR SASSERT_PP_STRINGIZE(expr)                \
+                     SASSERT_COLOR_RESET "` failed"                         \
+     "\n           ";                                                       \
+    (Super_Assert::start() * expr).print();                                 \
+    std::cerr << std::endl;                                                 \
     assert_abort();
 
 #define sassert_message(expr, msg) do {                                   \
   if ((expr) ? 0 : 1) {                                                   \
     std::ios_base::sync_with_stdio(1);                                    \
     std::cerr << SASSERT_COLOR_MSG << (msg) << SASSERT_COLOR_RESET ":\n"; \
-    sassert_fail_(expr)                                                   \
+    SASSERT_FAIL_(expr)                                                   \
   }                                                                       \
 } while(0)
 
 #define sassert(expr) do {             \
   if ((expr) ? 0 : 1) {                \
     std::ios_base::sync_with_stdio(1); \
-    sassert_fail_(expr)                \
+    SASSERT_FAIL_(expr)                \
   }                                    \
 } while(0)
 

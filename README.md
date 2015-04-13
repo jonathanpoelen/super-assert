@@ -31,7 +31,7 @@ Defined macros
 
 If `NDEBUG` is defined then sassert does nothing.
 
-If `NO_BOOST` is defined then boost isn't use (boost/current_function.hpp).
+If `NO_BOOST` is defined then boost isn't use (boost/current_function.hpp and boost/preprocessor/stringize.hpp).
 
 If `SASSERT_COLOR` is defined then colors are initialized.
 
