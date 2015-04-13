@@ -253,7 +253,7 @@ struct SAssert
 
 template<>
 struct SAssert<void,void>
-{};
+{ constexpr SAssert(){} };
 
 template<typename T>
 struct SAssert<T,void>
@@ -273,7 +273,7 @@ SAssert<const T&>
 operator*(const SAssert<>&, const T& x)
 { return {x}; }
 
-constexpr SAssert<> B;
+constexpr SAssert<> start() { return {}; }
 
 #define MOP(op)\
 template<typename T, typename U>\
@@ -335,7 +335,7 @@ inline void assert_abort()
     ":\n" SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET         \
     ":\nAssertion `" SASSERT_COLOR_EXPR PP_CAT(expr) SASSERT_COLOR_RESET "` failed" \
      "\n           ";                                                               \
-    (Super_Assert::B * expr).print();                                               \
+    (Super_Assert::start() * expr).print();                                         \
     std::cerr << std::endl;                                                         \
     assert_abort();
 
