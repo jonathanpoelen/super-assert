@@ -1,5 +1,6 @@
 /**
  * \author Jonathan Poelen, jonathan.poelen+sassert@gmail.com
+ * \brief Improved display of the assert() macro from C++.
  */
 
 #ifndef SASSERT_HPP
@@ -305,7 +306,7 @@ SASSERT_OP(>)
 SASSERT_OP(>=)
 
 #undef SASSERT_OP
-}
+
 
 #ifndef NO_BOOST
 # define SASSERT_PP_STRINGIZE BOOST_PP_STRINGIZE
@@ -326,39 +327,39 @@ SASSERT_OP(>=)
 #  endif
 # endif
 
-/*[[noreturn]]*/
-inline void assert_abort()
+[[noreturn]] inline void assert_fail() noexcept
 {
-  struct null_pointer { void ** p = nullptr; };
-  *null_pointer().p = 0;
+  std::abort();
 }
 
-#define SASSERT_FAIL_(expr)                                                 \
-    std::cerr << SASSERT_COLOR_FILE __FILE__ SASSERT_COLOR_RESET            \
-    ":" SASSERT_COLOR_LINE SASSERT_PP_STRINGIZE(__LINE__) SASSERT_COLOR_RESET     \
-    ":\n" SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET \
-    ":\nAssertion `" SASSERT_COLOR_EXPR SASSERT_PP_STRINGIZE(expr)                \
-                     SASSERT_COLOR_RESET "` failed"                         \
-     "\n           ";                                                       \
-    (Super_Assert::start() * expr).print();                                 \
-    std::cerr << std::endl;                                                 \
-    assert_abort();
+#define SASSERT_FAIL_(expr)                                                   \
+    ::std::cerr << SASSERT_COLOR_FILE __FILE__ SASSERT_COLOR_RESET            \
+    ":" SASSERT_COLOR_LINE SASSERT_PP_STRINGIZE(__LINE__) SASSERT_COLOR_RESET \
+    ":\n" SASSERT_COLOR_FUNCTION << SASSERT_FUNCTION << SASSERT_COLOR_RESET   \
+    ":\nAssertion `" SASSERT_COLOR_EXPR SASSERT_PP_STRINGIZE(expr)            \
+                     SASSERT_COLOR_RESET "` failed"                           \
+     "\n           ";                                                         \
+    (::Super_Assert::start() * expr).print();                                 \
+    ::std::cerr << std::endl;                                                 \
+    ::Super_Assert::assert_fail();
 
-#define sassert_message(expr, msg) do {                                   \
-  if ((expr) ? 0 : 1) {                                                   \
-    std::ios_base::sync_with_stdio(1);                                    \
-    std::cerr << SASSERT_COLOR_MSG << (msg) << SASSERT_COLOR_RESET ":\n"; \
-    SASSERT_FAIL_(expr)                                                   \
-  }                                                                       \
+#define sassert_message(expr, msg) do {                                     \
+  if (!bool(expr)) {                                                        \
+    ::std::ios_base::sync_with_stdio(1);                                    \
+    ::std::cerr << SASSERT_COLOR_MSG << (msg) << SASSERT_COLOR_RESET ":\n"; \
+    SASSERT_FAIL_(expr)                                                     \
+  }                                                                         \
 } while(0)
 
-#define sassert(expr) do {             \
-  if ((expr) ? 0 : 1) {                \
-    std::ios_base::sync_with_stdio(1); \
-    SASSERT_FAIL_(expr)                \
-  }                                    \
+#define sassert(expr) do {               \
+  if (!bool(expr)) {                     \
+    ::std::ios_base::sync_with_stdio(1); \
+    SASSERT_FAIL_(expr)                  \
+  }                                      \
 } while(0)
 
 #endif
+
+}
 
 #endif

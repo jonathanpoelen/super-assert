@@ -7,7 +7,7 @@ Improved display of the assert() macro from C++.
 Build
 -----
 
-  `make` or `make CPPFLAGS+=-DSASSERT_NO_COLOR`
+  `make` or `make CPPFLAGS+=-DSASSERT_COLOR`
 
 
 Defined macros
