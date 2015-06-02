@@ -1,4 +1,4 @@
-#include "sassert.hpp"
+#include "sassert/sassert.hpp"
 
 int main()
 {
@@ -9,7 +9,7 @@ int main()
   sassert_message(a * b && c < d, "unsatisfactory because of operator precedence");
   struct A{ bool operator == (A const &){return true;}} aa;
   sassert_message(aa == aa, "no printable");
-  sassert(""=="");
-  
+  sassert(3==3);
+
   sassert(a * b + c + 'a' < d );
 }

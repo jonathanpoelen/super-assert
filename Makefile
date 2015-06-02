@@ -1,6 +1,6 @@
-CXXFLAGS+=-std=c++11 -Wall -Wextra
+CXXFLAGS+=-std=c++11 -Wall -Wextra -Iinclude
 CPPFLAGS+=-DSASSERT_COLOR
 CPPFLAGS+=-I.
 
 
-test: test.cpp sassert.hpp
+test: test.cpp include/sassert/sassert.hpp
