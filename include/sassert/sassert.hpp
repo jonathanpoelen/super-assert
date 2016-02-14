@@ -17,6 +17,8 @@
 #include <iostream>
 #include <type_traits>
 
+# include <cstdlib> // std::abort
+
 #ifndef NO_BOOST
 # include <boost/current_function.hpp>
 # include <boost/preprocessor/stringize.hpp>
@@ -192,7 +194,7 @@ struct Printer<T, PrinterType::character>
   static void print(char x)
   {
     if (x == std::char_traits<char>::to_char_type('\'')) {
-      std::cerr << SASSERT_COLOR_CHARACTER"'\''" SASSERT_COLOR_RESET;
+      std::cerr << SASSERT_COLOR_CHARACTER "'\''" SASSERT_COLOR_RESET;
     }
     else {
       std::cerr << SASSERT_COLOR_CHARACTER "'" << x << "'" SASSERT_COLOR_RESET;
@@ -203,7 +205,7 @@ struct Printer<T, PrinterType::character>
   static void print(const U& x)
   {
     if (x == std::char_traits<T>::to_char_type('\'')) {
-      std::wcerr << SASSERT_COLOR_CHARACTER"'\''" SASSERT_COLOR_RESET;
+      std::wcerr << SASSERT_COLOR_CHARACTER "'\''" SASSERT_COLOR_RESET;
     }
     else {
       std::wcerr << SASSERT_COLOR_CHARACTER "'" << x << "'" SASSERT_COLOR_RESET;
@@ -277,20 +279,22 @@ operator*(const SAssert<>&, const T& x)
 
 constexpr SAssert<> start() { return {}; }
 
-#define SASSERT_OP(op)\
-template<typename T, typename U>\
-SAssert<const T&, const U&>\
-operator op(const SAssert<T>& a, const U& x)\
-{ return {a.l, #op, x}; }\
-\
-template<typename T, typename U, typename R>\
-SAssert<const SAssert<T,U>&, const R&>\
-operator op(const SAssert<T,U>& a, const R& x)\
-{ return {a, #op, x}; }
+#define SASSERT_OP(op)                           \
+  template<typename T, typename U>               \
+  SAssert<const T&, const U&>                    \
+  operator op(const SAssert<T>& a, const U& x)   \
+  { return {a.l, #op, x}; }                      \
+                                                 \
+  template<typename T, typename U, typename R>   \
+  SAssert<const SAssert<T,U>&, const R&>         \
+  operator op(const SAssert<T,U>& a, const R& x) \
+  { return {a, #op, x}; }
 
 SASSERT_OP(&)
 SASSERT_OP(^)
 SASSERT_OP(|)
+SASSERT_OP(<<)
+SASSERT_OP(>>)
 SASSERT_OP(||)
 SASSERT_OP(&&)
 SASSERT_OP(*)
