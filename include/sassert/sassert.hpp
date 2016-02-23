@@ -46,8 +46,8 @@ namespace Super_Assert {
 #  ifndef SASSERT_COLOR_OTHER
 #    define SASSERT_COLOR_OTHER "\033[00;35m"
 #  endif
-#  ifndef SASSERT_COLOR_UNKNOW
-#    define SASSERT_COLOR_UNKNOW "\033[00;36m"
+#  ifndef SASSERT_COLOR_UNKNOWN
+#    define SASSERT_COLOR_UNKNOWN "\033[00;36m"
 #  endif
 #  ifndef SASSERT_COLOR_SYMBOLE
 #    define SASSERT_COLOR_SYMBOLE "\033[00;35m"
@@ -77,7 +77,7 @@ namespace Super_Assert {
 #  define SASSERT_COLOR_BOOLEAN ""
 #  define SASSERT_COLOR_STRING ""
 #  define SASSERT_COLOR_OTHER ""
-#  define SASSERT_COLOR_UNKNOW ""
+#  define SASSERT_COLOR_UNKNOWN ""
 #  define SASSERT_COLOR_SYMBOLE ""
 #  define SASSERT_COLOR_EXPR ""
 #  define SASSERT_COLOR_MSG ""
@@ -157,7 +157,7 @@ struct Printer
 
   template<typename U>
   static void dispatch_with_to_string(const U&, unsigned)
-  { std::cerr << SASSERT_COLOR_UNKNOW "<unknow>" SASSERT_COLOR_RESET; }
+  { std::cerr << SASSERT_COLOR_UNKNOWN "<unknown>" SASSERT_COLOR_RESET; }
 };
 
 template<typename T>
