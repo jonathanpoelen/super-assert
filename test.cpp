@@ -1,3 +1,4 @@
+#define SASSERT_NO_BOOST_SUPPORT
 #include "sassert/sassert.hpp"
 
 int main()

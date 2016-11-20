@@ -3,4 +3,4 @@ CPPFLAGS+=-DSASSERT_COLOR
 CPPFLAGS+=-I.
 
 
-test: test.cpp include/sassert/sassert.hpp
+test: test.cpp

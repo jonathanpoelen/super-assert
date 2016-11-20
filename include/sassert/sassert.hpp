@@ -17,19 +17,36 @@
 #include <iostream>
 #include <type_traits>
 
-# include <cstdlib> // std::abort
+#include <cstdlib> // std::abort
 
-#ifndef NO_BOOST
-# include <boost/current_function.hpp>
-# include <boost/preprocessor/stringize.hpp>
+#ifdef NO_BOOST_SUPPORT
+#  ifndef SASSERT_NO_BOOST_SUPPORT
+#    define SASSERT_NO_BOOST_SUPPORT
+#  endif
+#endif
+
+#ifndef SASSERT_NO_BOOST_SUPPORT
+#  include <boost/current_function.hpp>
+#  include <boost/preprocessor/stringize.hpp>
+#  include <boost/container/string.hpp>
+#endif
+
+// std::string_view / std::experimental::string_view
+#if __cplusplus >= 201402L && defined __has_include
+#  if __has_include(<string_view>)
+#    include <string_view>
+#    define SASSERT_STD_STRING_VIEW std::string_view
+#  elif __has_include(<experimental/string_view>)
+#    include <experimental/string_view>
+#    define SASSERT_STD_STRING_VIEW std::experimental::string_view
+#  endif
 #endif
 
 namespace Super_Assert {
 
 #if defined(SASSERT_COLOR) && !defined(SASSERT_NO_COLOR)
-//TODO SASSERT_DYNAMIC_COLOR (read file configuration)
 #  ifndef SASSERT_COLOR_CHARACTER
-#  define SASSERT_COLOR_CHARACTER "\033[00;33m"
+#    define SASSERT_COLOR_CHARACTER "\033[00;33m"
 #  endif
 #  ifndef SASSERT_COLOR_FLOATING
 #    define SASSERT_COLOR_FLOATING "\033[00;32m"
@@ -71,6 +88,48 @@ namespace Super_Assert {
 #    define SASSERT_COLOR_RESET "\033[00m"
 #  endif
 #else
+#  ifdef SASSERT_COLOR_CHARACTER
+#    undef SASSERT_COLOR_CHARACTER
+#  endif
+#  ifdef SASSERT_COLOR_FLOATING
+#    undef SASSERT_COLOR_FLOATING
+#  endif
+#  ifdef SASSERT_COLOR_INTEGRAL
+#    undef SASSERT_COLOR_INTEGRAL
+#  endif
+#  ifdef SASSERT_COLOR_BOOLEAN
+#    undef SASSERT_COLOR_BOOLEAN
+#  endif
+#  ifdef SASSERT_COLOR_STRING
+#    undef SASSERT_COLOR_STRING
+#  endif
+#  ifdef SASSERT_COLOR_OTHER
+#    undef SASSERT_COLOR_OTHER
+#  endif
+#  ifdef SASSERT_COLOR_UNKNOWN
+#    undef SASSERT_COLOR_UNKNOWN
+#  endif
+#  ifdef SASSERT_COLOR_SYMBOLE
+#    undef SASSERT_COLOR_SYMBOLE
+#  endif
+#  ifdef SASSERT_COLOR_EXPR
+#    undef SASSERT_COLOR_EXPR
+#  endif
+#  ifdef SASSERT_COLOR_MSG
+#    undef SASSERT_COLOR_MSG
+#  endif
+#  ifdef SASSERT_COLOR_FILE
+#    undef SASSERT_COLOR_FILE
+#  endif
+#  ifdef SASSERT_COLOR_LINE
+#    undef SASSERT_COLOR_LINE
+#  endif
+#  ifdef SASSERT_COLOR_FUNCTION
+#    undef SASSERT_COLOR_FUNCTION
+#  endif
+#  ifdef SASSERT_COLOR_RESET
+#    undef SASSERT_COLOR_RESET
+#  endif
 #  define SASSERT_COLOR_CHARACTER ""
 #  define SASSERT_COLOR_FLOATING ""
 #  define SASSERT_COLOR_INTEGRAL ""
@@ -88,94 +147,98 @@ namespace Super_Assert {
 #endif
 
 
-template<typename T> struct is_character : std::false_type {};
+// is_character
+//@{
+template<class> struct is_character : std::false_type {};
+
 template<> struct is_character<signed char> : std::true_type {};
 template<> struct is_character<unsigned char> : std::true_type {};
 template<> struct is_character<char> : std::true_type {};
 template<> struct is_character<wchar_t> : std::true_type {};
 template<> struct is_character<char16_t> : std::true_type {};
 template<> struct is_character<char32_t> : std::true_type {};
-
-template<class BasicString> struct is_basic_string : std::false_type {};
-template<class CharT, class Trait, class Allocator>
-struct is_basic_string<std::basic_string<CharT, Trait, Allocator> >
-: std::true_type {};
-
-template<class T> struct is_string : is_basic_string<T> {};
-template<class T> struct is_string<T*> : is_character<T> {};
-template<class T, std::size_t N> struct is_string<T[N]> : is_character<T> {};
-
-template<class T, class TrueClass, class FalseClass>
-using eval_if_c_t = typename std::conditional<T::value, TrueClass, FalseClass>::type::type;
+//@}
 
 
-enum class PrinterType
-{
-  integral,
-  floating_point,
-  boolean,
-  string,
-  character,
-  other
-};
+// is_string_like
+//@{
+template<class T> struct is_string_like : std::false_type {};
 
-template<PrinterType val>
-struct printer_type
-{
-  static constexpr PrinterType value = val;
-  typedef printer_type type;
-};
+template<class T> struct is_string_like<T*> : is_character<T> {};
+template<class T, std::size_t N>
+struct is_string_like<T[N]> : is_character<T> {};
+
+template<class CharT, class Traits, class Allocator>
+struct is_string_like<std::basic_string<CharT, Traits, Allocator> > : std::true_type {};
+
+#ifdef SASSERT_STD_STRING_VIEW
+template<class CharT, class Traits>
+struct is_string_like<SASSERT_STD_STRING_VIEW<CharT, Traits> > : std::true_type {};
+#endif
+
+#ifndef SASSERT_NO_BOOST_SUPPORT
+template<class CharT, class Traits, class Allocator>
+struct is_string_like<boost::basic_string<CharT, Traits, Allocator> > : std::true_type {};
+#endif
+//@}
+
+
+template<bool b>
+using require_c = typename std::enable_if<b>::type;
+
+template<class B>
+using require = require_c<B::value>;
+
 
 using std::to_string;
 
-template<typename T, PrinterType =
-eval_if_c_t<is_character<T>, printer_type<PrinterType::character>,
-eval_if_c_t<std::is_same<T, bool>, printer_type<PrinterType::boolean>,
-eval_if_c_t<std::is_integral<T>, printer_type<PrinterType::integral>,
-eval_if_c_t<std::is_floating_point<T>, printer_type<PrinterType::floating_point>,
-eval_if_c_t<is_string<T>, printer_type<PrinterType::string>,
-printer_type<PrinterType::other>
->>>>>::value>
+template<class T, class = void>
 struct Printer
 {
   static void print(const T& x)
   { dispatch_print(x, 0); }
 
-  template<typename U>
+  template<class U>
   static auto dispatch_print(const U& x, int)
   -> decltype(std::cerr << x)
   { return std::cerr << SASSERT_COLOR_OTHER "{ " << x << " }" SASSERT_COLOR_RESET; }
 
-  template<typename U>
-  static void dispatch_print(const U& x, unsigned)
+  template<class U>
+  static void dispatch_print(const U& x, char)
   { dispatch_with_to_string(x, 0); }
 
-  template<typename U>
+  template<class U>
   static auto dispatch_with_to_string(const U& x, int)
   -> decltype(std::cerr << to_string(x))
   { return std::cerr << SASSERT_COLOR_STRING "\"" << to_string(x) << "\"" SASSERT_COLOR_RESET; }
 
-  template<typename U>
-  static void dispatch_with_to_string(const U&, unsigned)
+  template<class U>
+  static void dispatch_with_to_string(const U&, char)
   { std::cerr << SASSERT_COLOR_UNKNOWN "<unknown>" SASSERT_COLOR_RESET; }
 };
 
-template<typename T>
-struct Printer<T, PrinterType::integral>
+template<class T>
+struct Printer<
+  T, require_c<(
+    std::is_integral<T>::value &&
+    !std::is_same<T, bool>::value &&
+    !is_character<T>::value
+  )>
+>
 {
   static void print(const T& x)
   { std::cerr << "" SASSERT_COLOR_INTEGRAL << x << "" SASSERT_COLOR_RESET; }
 };
 
-template<typename T>
-struct Printer<T, PrinterType::floating_point>
+template<class T>
+struct Printer<T, require<std::is_floating_point<T>>>
 {
   static void print(const T& x)
   { std::cerr << "" SASSERT_COLOR_FLOATING << x << "" SASSERT_COLOR_RESET; }
 };
 
-template<typename T>
-struct Printer<T, PrinterType::string>
+template<class T>
+struct Printer<T, require<is_string_like<T>>>
 {
   static void print(const T& x)
   { dispatch_print(x, 0); }
@@ -184,12 +247,12 @@ struct Printer<T, PrinterType::string>
   -> decltype(std::cerr << x)
   { return std::cerr << SASSERT_COLOR_STRING "\"" << x << "\"" SASSERT_COLOR_RESET; }
 
-  static void dispatch_print(const T& x, unsigned)
+  static void dispatch_print(const T& x, char)
   { std::wcerr << SASSERT_COLOR_STRING "\"" << x << "\"" SASSERT_COLOR_RESET; }
 };
 
-template<typename T>
-struct Printer<T, PrinterType::character>
+template<class T>
+struct Printer<T, require<is_character<T>>>
 {
   static void print(char x)
   {
@@ -201,7 +264,7 @@ struct Printer<T, PrinterType::character>
     }
   }
 
-  template<typename U>
+  template<class U>
   static void print(const U& x)
   {
     if (x == std::char_traits<T>::to_char_type('\'')) {
@@ -213,8 +276,8 @@ struct Printer<T, PrinterType::character>
   }
 };
 
-template<typename T>
-struct Printer<T, PrinterType::boolean>
+template<class T>
+struct Printer<T, require<std::is_same<T, bool>>>
 {
   static void print(const T& x)
   {
@@ -243,11 +306,11 @@ struct SAssert
   }
 
   template<typename P>
-  void print(const P& p) const
+  static void print(const P& p)
   { Printer<P>::print(p); }
 
   template<typename TT, typename UU>
-  void print(const SAssert<TT,UU>& a) const
+  static void print(const SAssert<TT,UU>& a)
   { a.print(); }
 
   template<typename R>
@@ -259,20 +322,20 @@ template<>
 struct SAssert<void,void>
 { constexpr SAssert(){} };
 
-template<typename T>
+template<class T>
 struct SAssert<T,void>
 {
   T l;
 
-  void print() const
+  void print()
   { Printer<T>::print(l); }
 
-  template<typename U>
+  template<class U>
   SAssert<T, const U&> operator=(const U& x)
   { return {l, "=", x}; }
 };
 
-template<typename T>
+template<class T>
 SAssert<const T&>
 operator*(const SAssert<>&, const T& x)
 { return {x}; }
@@ -280,12 +343,12 @@ operator*(const SAssert<>&, const T& x)
 constexpr SAssert<> start() { return {}; }
 
 #define SASSERT_OP(op)                           \
-  template<typename T, typename U>               \
+  template<class T, class U>               \
   SAssert<const T&, const U&>                    \
   operator op(const SAssert<T>& a, const U& x)   \
   { return {a.l, #op, x}; }                      \
                                                  \
-  template<typename T, typename U, typename R>   \
+  template<class T, class U, typename R>   \
   SAssert<const SAssert<T,U>&, const R&>         \
   operator op(const SAssert<T,U>& a, const R& x) \
   { return {a, #op, x}; }
@@ -312,24 +375,23 @@ SASSERT_OP(>=)
 #undef SASSERT_OP
 
 
-#ifndef NO_BOOST
-# define SASSERT_PP_STRINGIZE BOOST_PP_STRINGIZE
-#else
-# define SASSERT_PP_STRINGIZE_I(e) #e
-# define SASSERT_PP_STRINGIZE(e) SASSERT_PP_STRINGIZE_I(e)
-#endif
-
-#ifndef NO_BOOST
+#ifndef SASSERT_NO_BOOST_SUPPORT
+#  define SASSERT_PP_STRINGIZE BOOST_PP_STRINGIZE
 #  define SASSERT_FUNCTION BOOST_CURRENT_FUNCTION
-#elif defined __GNU && defined __cplusplus ? __GNUC_PREREQ (2, 6) : __GNUC_PREREQ (2, 4)
-#  define SASSERT_FUNCTION __PRETTY_FUNCTION__
 #else
-#  if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#  define SASSERT_PP_STRINGIZE_I(e) #e
+#  define SASSERT_PP_STRINGIZE(e) SASSERT_PP_STRINGIZE_I(e)
+
+#  if defined __GNUC__
+#    define SASSERT_FUNCTION __PRETTY_FUNCTION__
+#  elif defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#    define SASSERT_FUNCTION __func__
+#  elif defined __cplusplus && __cplusplus >= 201103
 #    define SASSERT_FUNCTION __func__
 #  else
 #    define SASSERT_FUNCTION ""
 #  endif
-# endif
+#endif
 
 [[noreturn]] inline void assert_fail() noexcept
 {
@@ -365,5 +427,9 @@ SASSERT_OP(>=)
 #endif
 
 }
+
+#ifdef SASSERT_STD_STRING_VIEW
+#  undef SASSERT_STD_STRING_VIEW
+#endif
 
 #endif
