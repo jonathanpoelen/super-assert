@@ -415,8 +415,7 @@ inline void sassert_pre()
                      SASSERT_COLOR_RESET "` failed"                           \
      "\n           ";                                                         \
     (::Super_Assert::start() * expr).print();                                 \
-    ::std::cerr << std::endl;                                                 \
-    ::Super_Assert::assert_fail()
+    ::std::cerr << std::endl
 
 #define sassert_msg(expr, msg) do {                                         \
   if (!bool(expr)) {                                                        \
@@ -426,6 +425,7 @@ inline void sassert_pre()
       SASSERT_FAIL_(expr);                                                  \
     } catch (...) {                                                         \
     }                                                                       \
+    ::Super_Assert::assert_fail();                                          \
   }                                                                         \
 } while(0)
 
@@ -436,6 +436,7 @@ inline void sassert_pre()
       SASSERT_FAIL_(expr);         \
     } catch (...) {                \
     }                              \
+    ::Super_Assert::assert_fail(); \
   }                                \
 } while(0)
 
