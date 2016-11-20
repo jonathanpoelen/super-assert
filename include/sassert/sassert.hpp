@@ -393,6 +393,15 @@ SASSERT_OP(>=)
 #  endif
 #endif
 
+inline void sassert_pre()
+{
+  std::cerr.clear();
+  std::cerr.exceptions(std::ios::goodbit);
+  std::wcerr.clear();
+  std::wcerr.exceptions(std::ios::goodbit);
+  std::ios_base::sync_with_stdio(1);
+}
+
 [[noreturn]] inline void assert_fail() noexcept
 {
   std::abort();
@@ -407,21 +416,27 @@ SASSERT_OP(>=)
      "\n           ";                                                         \
     (::Super_Assert::start() * expr).print();                                 \
     ::std::cerr << std::endl;                                                 \
-    ::Super_Assert::assert_fail();
+    ::Super_Assert::assert_fail()
 
 #define sassert_message(expr, msg) do {                                     \
   if (!bool(expr)) {                                                        \
-    ::std::ios_base::sync_with_stdio(1);                                    \
-    ::std::cerr << SASSERT_COLOR_MSG << (msg) << SASSERT_COLOR_RESET ":\n"; \
-    SASSERT_FAIL_(expr)                                                     \
+    ::Super_Assert::sassert_pre();                                          \
+    try {                                                                   \
+      ::std::cerr << SASSERT_COLOR_MSG << msg << SASSERT_COLOR_RESET ":\n"; \
+      SASSERT_FAIL_(expr);                                                  \
+    } catch (...) {                                                         \
+    }                                                                       \
   }                                                                         \
 } while(0)
 
-#define sassert(expr) do {               \
-  if (!bool(expr)) {                     \
-    ::std::ios_base::sync_with_stdio(1); \
-    SASSERT_FAIL_(expr)                  \
-  }                                      \
+#define sassert(expr) do {         \
+  if (!bool(expr)) {               \
+    ::Super_Assert::sassert_pre(); \
+    try {                          \
+      SASSERT_FAIL_(expr);         \
+    } catch (...) {                \
+    }                              \
+  }                                \
 } while(0)
 
 #endif
