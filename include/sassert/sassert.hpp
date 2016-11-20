@@ -8,7 +8,7 @@
 
 #ifdef NDEBUG
 
-#define sassert_message(expr, msg)
+#define sassert_msg(expr, msg)
 #define sassert(expr)
 
 #else
@@ -418,7 +418,7 @@ inline void sassert_pre()
     ::std::cerr << std::endl;                                                 \
     ::Super_Assert::assert_fail()
 
-#define sassert_message(expr, msg) do {                                     \
+#define sassert_msg(expr, msg) do {                                         \
   if (!bool(expr)) {                                                        \
     ::Super_Assert::sassert_pre();                                          \
     try {                                                                   \

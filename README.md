@@ -5,6 +5,10 @@ Improved display of the assert() macro from C++.
 
 ![Sassert example](https://raw.githubusercontent.com/jonathanpoelen/super-assert/master/sample_output.gif)
 
+- `sassert(expr)`
+- `sassert_msg(expr, ostream_expr)`. Example: `sassert_msg(expr, "ctx: " << x.debug())`
+
+
 Build
 -----
 
