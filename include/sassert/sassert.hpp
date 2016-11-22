@@ -221,7 +221,6 @@ template<class T>
 struct Printer<
   T, require_c<(
     std::is_integral<T>::value &&
-    !std::is_same<T, bool>::value &&
     !is_character<T>::value
   )>
 >
@@ -276,10 +275,10 @@ struct Printer<T, require<is_character<T>>>
   }
 };
 
-template<class T>
-struct Printer<T, require<std::is_same<T, bool>>>
+template<>
+struct Printer<bool, void>
 {
-  static void print(T const & x)
+  static void print(bool x)
   {
     if (x) {
       std::cerr << SASSERT_COLOR_BOOLEAN "true" SASSERT_COLOR_RESET;
