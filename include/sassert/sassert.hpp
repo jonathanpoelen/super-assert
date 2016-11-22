@@ -195,25 +195,25 @@ using std::to_string;
 template<class T, class = void>
 struct Printer
 {
-  static void print(const T& x)
+  static void print(T const & x)
   { dispatch_print(x, 0); }
 
   template<class U>
-  static auto dispatch_print(const U& x, int)
+  static auto dispatch_print(U const & x, int)
   -> decltype(std::cerr << x)
   { return std::cerr << SASSERT_COLOR_OTHER "{ " << x << " }" SASSERT_COLOR_RESET; }
 
   template<class U>
-  static void dispatch_print(const U& x, char)
+  static void dispatch_print(U const & x, char)
   { dispatch_with_to_string(x, 0); }
 
   template<class U>
-  static auto dispatch_with_to_string(const U& x, int)
+  static auto dispatch_with_to_string(U const & x, int)
   -> decltype(std::cerr << to_string(x))
   { return std::cerr << SASSERT_COLOR_STRING "\"" << to_string(x) << "\"" SASSERT_COLOR_RESET; }
 
   template<class U>
-  static void dispatch_with_to_string(const U&, char)
+  static void dispatch_with_to_string(U const &, char)
   { std::cerr << SASSERT_COLOR_UNKNOWN "<unknown>" SASSERT_COLOR_RESET; }
 };
 
@@ -226,28 +226,28 @@ struct Printer<
   )>
 >
 {
-  static void print(const T& x)
-  { std::cerr << "" SASSERT_COLOR_INTEGRAL << x << "" SASSERT_COLOR_RESET; }
+  static void print(T const & x)
+  { std::cerr << SASSERT_COLOR_INTEGRAL << x << SASSERT_COLOR_RESET; }
 };
 
 template<class T>
 struct Printer<T, require<std::is_floating_point<T>>>
 {
-  static void print(const T& x)
-  { std::cerr << "" SASSERT_COLOR_FLOATING << x << "" SASSERT_COLOR_RESET; }
+  static void print(T const & x)
+  { std::cerr << SASSERT_COLOR_FLOATING << x << SASSERT_COLOR_RESET; }
 };
 
 template<class T>
 struct Printer<T, require<is_string_like<T>>>
 {
-  static void print(const T& x)
+  static void print(T const & x)
   { dispatch_print(x, 0); }
 
-  static auto dispatch_print(const T& x, int)
+  static auto dispatch_print(T const & x, int)
   -> decltype(std::cerr << x)
   { return std::cerr << SASSERT_COLOR_STRING "\"" << x << "\"" SASSERT_COLOR_RESET; }
 
-  static void dispatch_print(const T& x, char)
+  static void dispatch_print(T const & x, char)
   { std::wcerr << SASSERT_COLOR_STRING "\"" << x << "\"" SASSERT_COLOR_RESET; }
 };
 
@@ -265,7 +265,7 @@ struct Printer<T, require<is_character<T>>>
   }
 
   template<class U>
-  static void print(const U& x)
+  static void print(U const & x)
   {
     if (x == std::char_traits<T>::to_char_type('\'')) {
       std::wcerr << SASSERT_COLOR_CHARACTER "'\''" SASSERT_COLOR_RESET;
@@ -279,7 +279,7 @@ struct Printer<T, require<is_character<T>>>
 template<class T>
 struct Printer<T, require<std::is_same<T, bool>>>
 {
-  static void print(const T& x)
+  static void print(T const & x)
   {
     if (x) {
       std::cerr << SASSERT_COLOR_BOOLEAN "true" SASSERT_COLOR_RESET;
@@ -291,30 +291,30 @@ struct Printer<T, require<std::is_same<T, bool>>>
 };
 
 
-template<typename T = void, typename U = void>
+template<class T = void, class U = void>
 struct SAssert
 {
-  T l;
+  T lhs;
   const char * op;
-  U r;
+  U rhs;
 
   void print() const
   {
-    print(l);
+    print(lhs);
     std::cerr << " " SASSERT_COLOR_SYMBOLE << op << SASSERT_COLOR_RESET " ";
-    print(r);
+    print(rhs);
   }
 
-  template<typename P>
-  static void print(const P& p)
+  template<class P>
+  static void print(P const & p)
   { Printer<P>::print(p); }
 
-  template<typename TT, typename UU>
-  static void print(const SAssert<TT,UU>& a)
+  template<class TT, class UU>
+  static void print(SAssert<TT,UU> const & a)
   { a.print(); }
 
-  template<typename R>
-  SAssert<const SAssert&, const R&> operator=(const R& x)
+  template<class R>
+  SAssert<SAssert const &, R const &> operator=(R const & x)
   { return {*this, "=", x}; }
 };
 
@@ -325,32 +325,32 @@ struct SAssert<void,void>
 template<class T>
 struct SAssert<T,void>
 {
-  T l;
+  T lhs;
 
   void print()
-  { Printer<T>::print(l); }
+  { Printer<T>::print(lhs); }
 
   template<class U>
-  SAssert<T, const U&> operator=(const U& x)
-  { return {l, "=", x}; }
+  SAssert<T, U const &> operator=(U const & x)
+  { return {lhs, "=", x}; }
 };
 
 template<class T>
-SAssert<const T&>
-operator*(const SAssert<>&, const T& x)
+SAssert<T const &>
+operator*(SAssert<>, T const & x)
 { return {x}; }
 
 constexpr SAssert<> start() { return {}; }
 
-#define SASSERT_OP(op)                           \
-  template<class T, class U>               \
-  SAssert<const T&, const U&>                    \
-  operator op(const SAssert<T>& a, const U& x)   \
-  { return {a.l, #op, x}; }                      \
-                                                 \
-  template<class T, class U, typename R>   \
-  SAssert<const SAssert<T,U>&, const R&>         \
-  operator op(const SAssert<T,U>& a, const R& x) \
+#define SASSERT_OP(op)                             \
+  template<class T, class U>                       \
+  SAssert<T const &, U const &>                    \
+  operator op(SAssert<T> const & a, U const & x)   \
+  { return {a.lhs, #op, x}; }                      \
+                                                   \
+  template<class T, class U, class R>              \
+  SAssert<SAssert<T, U> const &, R const &>        \
+  operator op(SAssert<T,U> const & a, R const & x) \
   { return {a, #op, x}; }
 
 SASSERT_OP(&)
@@ -389,7 +389,7 @@ SASSERT_OP(>=)
 #  elif defined __cplusplus && __cplusplus >= 201103
 #    define SASSERT_FUNCTION __func__
 #  else
-#    define SASSERT_FUNCTION ""
+#    define SASSERT_FUNCTION "(unknown)"
 #  endif
 #endif
 
@@ -402,6 +402,7 @@ inline void sassert_pre()
   std::ios_base::sync_with_stdio(1);
 }
 
+// only for stack trace
 [[noreturn]] inline void assert_fail() noexcept
 {
   std::abort();
